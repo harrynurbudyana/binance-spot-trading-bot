@@ -1,0 +1,28 @@
+# Environment variables & Sensitive API Keys
+.env
+.env.local
+.env.*.local
+
+# Python Virtual Environments
+venv/
+env/
+ENV/
+.venv/
+
+# Python Cache & Compiled Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+
+# Datasets (Large CSV files)
+data/*.csv
+!data/.gitkeep
+
+# OS & Editor files
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
