@@ -68,30 +68,40 @@ binance_trading_bot/
 
 ## 🚀 Panduan Penggunaan Lengkap
 
-### 1. Persiapan Awal
-Pasang dependensi Python yang dibutuhkan:
+### 1. Persiapan Awal (Setup Lingkungan & API)
+Sebelum menjalankan bot, Anda perlu mempersiapkan *environment* Python dan pengaturan API Binance:
+
+**A. Instalasi Dependensi**
+Buka terminal dan jalankan perintah berikut untuk mengaktifkan *virtual environment* dan menginstal *library* yang diperlukan:
 ```bash
+python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 2. Mengatur Watchlist Koin & Setelan Utama
-Buka file `.env` dan tambahkan koin-koin favorit Anda:
-```env
-WATCHLIST=BNB/USDT,SOL/USDT,XRP/USDT,ADA/USDT,DOGE/USDT,ETH/USDT,BTC/USDT
-STRATEGY_TYPE=HYBRID   # Pilihan: RSI atau HYBRID atau AI_ONLY
-IS_TESTNET=True        # Ubah ke False jika sudah siap pakai uang sungguhan (Mainnet)
-DRY_RUN=False
-```
+**B. Pengaturan File `.env` (API Keys & Parameter)**
+1. Salin file template konfigurasi ke file `.env` baru:
+   ```bash
+   cp .env.example .env
+   ```
+2. Buka file `.env` dan isi kunci API Anda:
+   - **BINANCE_API_KEY**: Isi dengan API Key Anda.
+   - **BINANCE_SECRET_KEY**: Isi dengan Secret Key Anda.
+   *(Jika bermain di Testnet, Anda bisa membuat API Key gratis di [testnet.binance.vision](https://testnet.binance.vision/))*
+3. Sesuaikan parameter lainnya (opsional):
+   - `WATCHLIST`: Koin apa saja yang mau dipantau (misal `BTC/USDT,ETH/USDT,SOL/USDT`).
+   - `STRATEGY_TYPE`: Strategi yang digunakan (`RSI` / `HYBRID` / `AI_ONLY`).
+   - `IS_TESTNET`: `True` jika simulasi uang palsu (Testnet), `False` jika menggunakan uang asli (Mainnet).
+   - `DRY_RUN`: `True` jika bot tidak boleh eksekusi beli/jual secara nyata, hanya mencetak sinyal (aman).
 
-### 3. Melatih Model AI (Wajib Lakukan Secara Berkala)
+### 2. Melatih Model AI (Wajib Lakukan Secara Berkala)
 Unduh data pasar terbaru lalu latih model AI-nya:
 ```bash
 ./venv/bin/python download_historical_data.py --candles 5000
 ./venv/bin/python train_ai_model.py
 ```
 
-### 4. Menjalankan Bot Trading
+### 3. Menjalankan Bot Trading
 Nyalakan mesin utama pencetak cuan:
 ```bash
 ./venv/bin/python main.py
