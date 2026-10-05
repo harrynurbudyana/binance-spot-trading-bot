@@ -83,23 +83,23 @@ class RSIStrategy:
         prev_rsi = float(prev_candle["rsi"])
         current_price = float(current_candle["close"])
 
-        # Evaluasi aturan strategi
-        if current_rsi < self.oversold:
+        # Evaluasi aturan strategi dinamis (Momentum)
+        if current_rsi <= (prev_rsi - 3.0):
             action = SignalAction.BUY
             reason = (
-                f"RSI ({current_rsi:.2f}) < Ambang Oversold ({self.oversold:.1f}) "
+                f"RSI Turun >= 3 poin (Saat ini: {current_rsi:.2f}, Prev: {prev_rsi:.2f}) "
                 f"pada timeframe {self.config.timeframe} -> Sinyal BELI."
             )
-        elif current_rsi > self.overbought:
+        elif current_rsi > prev_rsi:
             action = SignalAction.SELL
             reason = (
-                f"RSI ({current_rsi:.2f}) > Ambang Overbought ({self.overbought:.1f}) "
+                f"RSI Naik (Saat ini: {current_rsi:.2f}, Prev: {prev_rsi:.2f}) "
                 f"pada timeframe {self.config.timeframe} -> Sinyal JUAL (Take Profit)."
             )
         else:
             action = SignalAction.HOLD
             reason = (
-                f"RSI ({current_rsi:.2f}) berada di zona netral [{self.oversold:.1f} - {self.overbought:.1f}] "
+                f"RSI Stagnan/Turun kecil (Saat ini: {current_rsi:.2f}, Prev: {prev_rsi:.2f}) "
                 f"-> TAHAN (HOLD)."
             )
 

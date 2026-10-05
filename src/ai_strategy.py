@@ -97,23 +97,23 @@ class AIPredictiveStrategy:
         strategy_mode = getattr(self.config, "strategy_type", "HYBRID").upper()
 
         if strategy_mode == "HYBRID":
-            # Mode Hybrid: Sinyal beli RSI < 30 divalidasi oleh AI
-            if current_rsi < self.config.rsi_oversold:
+            # Mode Hybrid: Sinyal beli momentum divalidasi oleh AI
+            if current_rsi <= (prev_rsi - 3.0):
                 if ai_prob >= self.confidence_threshold:
                     action = SignalAction.BUY
                     reason = (
-                        f"[AI HYBRID BUY] RSI ({current_rsi:.2f} < {self.config.rsi_oversold}) "
+                        f"[AI HYBRID BUY] RSI Momentum Turun (Sekarang: {current_rsi:.2f}, Prev: {prev_rsi:.2f}) "
                         f"DIVALIDASI oleh AI (Keyakinan: {ai_prob*100:.1f}% >= {self.confidence_threshold*100:.1f}%)"
                     )
                 else:
                     action = SignalAction.HOLD
                     reason = (
-                        f"[AI FILTER DITOLAK] RSI Oversold ({current_rsi:.2f}), "
+                        f"[AI FILTER DITOLAK] RSI Momentum Terpenuhi (Sekarang: {current_rsi:.2f}, Prev: {prev_rsi:.2f}), "
                         f"tetapi AI menolak karena probabilitas rendah ({ai_prob*100:.1f}% < {self.confidence_threshold*100:.1f}%)"
                     )
-            elif current_rsi > self.config.rsi_overbought:
+            elif current_rsi > prev_rsi:
                 action = SignalAction.SELL
-                reason = f"[TAKE PROFIT] RSI Overbought ({current_rsi:.2f} > {self.config.rsi_overbought})"
+                reason = f"[TAKE PROFIT] RSI Momentum Naik ({current_rsi:.2f} > {prev_rsi:.2f})"
             else:
                 action = SignalAction.HOLD
                 reason = (

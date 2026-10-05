@@ -239,13 +239,13 @@ class CryptoTradingBot:
                 self.execute_sell(reason=f"TAKE PROFIT TARGET (+{self.config.take_profit_percent}%)", current_price=current_price)
                 return
 
-            # 3. Cek Sinyal Jual Strategi (Take Profit saat RSI Overbought)
+            # 3. Cek Sinyal Jual Strategi (Take Profit saat RSI Naik)
             if signal.action == SignalAction.SELL:
                 print(
                     Fore.GREEN + Style.BRIGHT
-                    + f"\n[ALERT RSI OVERBOUGHT] Sinyal Overbought RSI {rsi:.2f} > {self.config.rsi_overbought}!"
+                    + f"\n[ALERT RSI MOMENTUM] Sinyal Jual Strategi Aktif (RSI {rsi:.2f})!"
                 )
-                self.execute_sell(reason="RSI OVERBOUGHT (TAKE PROFIT)", current_price=current_price)
+                self.execute_sell(reason="RSI MOMENTUM NAIK (TAKE PROFIT)", current_price=current_price)
                 return
 
         # KASUS 2: TIDAK ADA POSISI AKTIF -> SCAN SEMUA KOIN DI WATCHLIST
@@ -283,7 +283,7 @@ class CryptoTradingBot:
                 )
                 print(
                     Fore.GREEN + Style.BRIGHT
-                    + f"\n🎯 [PELUANG EMAS DITEMUKAN] {best_sym} menyentuh RSI {best_rsi:.2f} (< {self.config.rsi_oversold})!"
+                    + f"\n🎯 [PELUANG EMAS DITEMUKAN] {best_sym} memicu Sinyal Beli Momentum (RSI turun ke {best_rsi:.2f})!"
                 )
                 print(Fore.GREEN + f" -> {best_sig.reason}")
                 self.execute_buy(symbol=best_sym, current_price=best_price)

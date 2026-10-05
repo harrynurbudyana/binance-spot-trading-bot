@@ -6,6 +6,7 @@ Membaca environment variables dari .env dan menyediakan objek konfigurasi yang t
 import os
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Optional
 from dotenv import load_dotenv
 
 # Cari path file .env dari direktori root proyek
