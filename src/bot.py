@@ -73,7 +73,7 @@ class CryptoTradingBot:
 
         print(Fore.CYAN + f"[3/3] Memeriksa lilin awal pasar ({self.config.timeframe})...")
         test_sym = symbols[0]
-        df = self.fetcher.get_ohlcv_dataframe(symbol=test_sym, limit=50)
+        df = self.fetcher.get_ohlcv_dataframe(symbol=test_sym, limit=210)
         signal = self.strategy.evaluate(df)
         print(
             Fore.GREEN
@@ -208,7 +208,7 @@ class CryptoTradingBot:
             pnl_usdt, pnl_pct = pos.calculate_pnl(current_price)
             pnl_color = Fore.GREEN if pnl_pct >= 0 else Fore.RED
 
-            df = self.fetcher.get_ohlcv_dataframe(symbol=symbol, limit=50)
+            df = self.fetcher.get_ohlcv_dataframe(symbol=symbol, limit=210)
             signal = self.strategy.evaluate(df)
             rsi = signal.rsi
 
@@ -256,7 +256,7 @@ class CryptoTradingBot:
 
             for sym in symbols_to_scan:
                 try:
-                    df = self.fetcher.get_ohlcv_dataframe(symbol=sym, limit=50)
+                    df = self.fetcher.get_ohlcv_dataframe(symbol=sym, limit=210)
                     sig = self.strategy.evaluate(df)
                     coin = sym.split("/")[0]
 

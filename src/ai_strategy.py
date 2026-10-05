@@ -95,20 +95,27 @@ class AIPredictiveStrategy:
 
         ai_prob = self.predict_latest_probability(df)
         strategy_mode = getattr(self.config, "strategy_type", "HYBRID").upper()
+        current_ma200 = rsi_signal.ma200 or 0.0
 
         if strategy_mode == "HYBRID":
-            # Mode Hybrid: Sinyal beli momentum divalidasi oleh AI
+            # Mode Hybrid: Sinyal beli momentum divalidasi oleh MA200 dan AI
             if current_rsi <= (prev_rsi - 3.0):
-                if ai_prob >= self.confidence_threshold:
+                if current_ma200 > 0 and current_price < current_ma200:
+                    action = SignalAction.HOLD
+                    reason = (
+                        f"[AI FILTER DITOLAK] RSI Momentum Terpenuhi, tapi Harga ({current_price:.4f}) di Bawah MA200 ({current_ma200:.4f}). "
+                        f"Tren Turun."
+                    )
+                elif ai_prob >= self.confidence_threshold:
                     action = SignalAction.BUY
                     reason = (
-                        f"[AI HYBRID BUY] RSI Momentum Turun (Sekarang: {current_rsi:.2f}, Prev: {prev_rsi:.2f}) "
+                        f"[AI HYBRID BUY] RSI Momentum Turun (Sekarang: {current_rsi:.2f}, Prev: {prev_rsi:.2f}) & Harga > MA200 "
                         f"DIVALIDASI oleh AI (Keyakinan: {ai_prob*100:.1f}% >= {self.confidence_threshold*100:.1f}%)"
                     )
                 else:
                     action = SignalAction.HOLD
                     reason = (
-                        f"[AI FILTER DITOLAK] RSI Momentum Terpenuhi (Sekarang: {current_rsi:.2f}, Prev: {prev_rsi:.2f}), "
+                        f"[AI FILTER DITOLAK] RSI Momentum Terpenuhi (Sekarang: {current_rsi:.2f}), "
                         f"tetapi AI menolak karena probabilitas rendah ({ai_prob*100:.1f}% < {self.confidence_threshold*100:.1f}%)"
                     )
             elif current_rsi > prev_rsi:
@@ -140,4 +147,5 @@ class AIPredictiveStrategy:
             price=current_price,
             reason=reason,
             timeframe=self.config.timeframe,
+            ma200=current_ma200,
         )

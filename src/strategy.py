@@ -31,6 +31,7 @@ class StrategySignal:
     price: float
     reason: str
     timeframe: str
+    ma200: Optional[float] = None
 
 
 class RSIStrategy:
@@ -75,6 +76,7 @@ class RSIStrategy:
         """
         df_copy = df.copy()
         df_copy["rsi"] = self.calculate_rsi(df_copy)
+        df_copy["ma200"] = df_copy["close"].rolling(window=200).mean()
 
         current_candle = df_copy.iloc[-1]
         prev_candle = df_copy.iloc[-2]
@@ -82,14 +84,21 @@ class RSIStrategy:
         current_rsi = float(current_candle["rsi"])
         prev_rsi = float(prev_candle["rsi"])
         current_price = float(current_candle["close"])
+        current_ma200 = float(current_candle["ma200"]) if pd.notna(current_candle.get("ma200")) else 0.0
 
-        # Evaluasi aturan strategi dinamis (Momentum)
+        # Evaluasi aturan strategi dinamis (Momentum) dengan Trend Filter MA200
         if current_rsi <= (prev_rsi - 3.0):
-            action = SignalAction.BUY
-            reason = (
-                f"RSI Turun >= 3 poin (Saat ini: {current_rsi:.2f}, Prev: {prev_rsi:.2f}) "
-                f"pada timeframe {self.config.timeframe} -> Sinyal BELI."
-            )
+            if current_ma200 > 0 and current_price < current_ma200:
+                action = SignalAction.HOLD
+                reason = (
+                    f"RSI Beli terpenuhi, tapi Harga ({current_price:.4f}) di Bawah MA200 ({current_ma200:.4f}). "
+                    f"Tren Sedang Turun -> DIBATALKAN (HOLD)."
+                )
+            else:
+                action = SignalAction.BUY
+                reason = (
+                    f"RSI Turun >= 3 poin (Saat ini: {current_rsi:.2f}) & Harga > MA200 -> Sinyal BELI."
+                )
         elif current_rsi > prev_rsi:
             action = SignalAction.SELL
             reason = (
@@ -110,4 +119,5 @@ class RSIStrategy:
             price=current_price,
             reason=reason,
             timeframe=self.config.timeframe,
+            ma200=current_ma200,
         )

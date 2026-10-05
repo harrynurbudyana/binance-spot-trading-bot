@@ -1,6 +1,24 @@
-# Binance Spot Testnet Modular Crypto Trading Bot with AI Machine Learning
+# Binance Spot Testnet & Mainnet Trading Bot with AI Machine Learning
 
-Bot trading cryptocurrency otomatis berbasis Python yang dibangun secara modular untuk bursa **Binance Spot Testnet** menggunakan library **CCXT**, dilengkapi dengan strategi **RSI** dan model **AI Machine Learning (Predictive Signal Filter)**, serta sistem **manajemen risiko terintegrasi** (pembatasan alokasi modal maksimal 10% saldo dan Stop Loss statis 2%).
+Bot trading cryptocurrency otomatis berbasis Python yang dibangun secara modular untuk bursa **Binance Spot** (mendukung Testnet & Mainnet) menggunakan library **CCXT**. Dilengkapi dengan pemindaian multi-market, strategi **RSI Momentum Dinamis**, **MA200 Trend Filter**, serta model **AI Machine Learning (Predictive Signal Filter)**. Bot juga terintegrasi penuh dengan sistem **manajemen risiko** (alokasi modal maksimal 10% saldo dan Take Profit / Stop Loss dinamis).
+
+---
+
+## 🌟 Fitur-Fitur Terkini (Update Terbaru)
+
+1. **Multi-Market Scanner (Watchlist)**
+   Bot tidak lagi mengandalkan satu koin. Cukup daftarkan koin-koin favorit Anda di variabel `WATCHLIST` dalam file `.env` (misal: `BNB/USDT, SOL/USDT, ADA/USDT`), dan bot akan memindai semuanya secara bergantian mencari peluang terbaik.
+   
+2. **Strategi RSI Momentum Dinamis (Bukan Sekadar Oversold)**
+   Alih-alih menggunakan batas kaku seperti RSI < 30 (Oversold), bot kini membaca momentum:
+   - **Sinyal Beli**: Terpicu jika nilai RSI turun minimal 3 poin dari *candle* sebelumnya (menandakan momentum *dip* atau penurunan tajam sesaat).
+   - **Sinyal Jual (Take Profit)**: Terpicu secara dinamis ketika RSI mulai naik kembali, mengikuti pantulan harga yang sesungguhnya.
+
+3. **MA200 Trend Filter (Proteksi Downtrend)**
+   Sinyal beli RSI sebaik apapun akan diabaikan (dibatalkan) jika harga koin saat itu berada **di bawah garis MA200 (Moving Average 200)**. Ini adalah proteksi solid untuk mencegah bot menangkap pisau jatuh (*falling knife*) saat pasar sedang tren turun panjang.
+
+4. **Kecerdasan Buatan (AI Hybrid Strategy)**
+   Sinyal momentum RSI dan tren MA200 dapat divalidasi ganda oleh model Machine Learning yang telah dilatih secara khusus memprediksi probabilitas kenaikan harga. Sinyal hanya lolos jika AI mendeteksi persentase kesuksesan yang tinggi.
 
 ---
 
@@ -8,105 +26,74 @@ Bot trading cryptocurrency otomatis berbasis Python yang dibangun secara modular
 
 ```text
 binance_trading_bot/
-├── .env                          # Konfigurasi aktif (API keys, parameter bot, risiko, AI)
-├── .env.example                  # Template konfigurasi environment
-├── requirements.txt              # Daftar dependensi Python (ccxt, pandas, scikit-learn, joblib)
-├── test_connection.py            # Skrip pengujian 8 komponen (koneksi, data, AI, saldo)
+├── .env                          # Konfigurasi aktif (API keys, watchlist, parameter risiko, AI)
 ├── main.py                       # Titik masuk utama untuk menjalankan bot trading
-├── download_historical_data.py   # Skrip pengunduh ribuan data lilin historis dari Binance
+├── download_historical_data.py   # Skrip pengunduh data historis untuk training AI
 ├── train_ai_model.py             # Skrip pelatihan model AI (GradientBoosting / RandomForest)
-├── README.md                     # Dokumentasi lengkap proyek
-├── data/
-│   └── historical_candles_15m.csv # Dataset historis 5,000 lilin 15m untuk training
-├── models/
-│   └── ai_trading_model.joblib   # Artefak model AI terlatih beserta metadata & scaler
+├── check_balance.py              # Skrip untuk memeriksa saldo tunai USDT & altcoin saat ini
+├── data/                         # Folder penyimpanan dataset historis (.csv)
+├── models/                       # Folder artefak model AI terlatih (.joblib)
 ├── src/                          # Modul inti bot (Modular Architecture)
-│   ├── __init__.py               # Inisialisasi package src
-│   ├── config.py                 # [BotConfig] Pembaca & validator .env terstruktur
-│   ├── exchange.py               # [BinanceExchangeClient] Client CCXT Binance Spot Testnet
-│   ├── fetcher.py                # [PriceFetcher] Pembaca Ticker, Candlestick OHLCV, Orderbook
-│   ├── features.py               # [FeatureEngineering] Ekstraksi 18 indikator teknikal untuk AI
-│   ├── strategy.py               # [RSIStrategy] Logika RSI 15m (Beli jika RSI < 30)
-│   ├── ai_strategy.py            # [AIPredictiveStrategy] Strategi Hybrid (RSI + AI Filter)
-│   ├── risk.py                   # [RiskManager] Aturan 10% Saldo USDT & Stop Loss Statis 2%
-│   └── bot.py                    # [CryptoTradingBot] Koordinator alur trading & monitoring
-└── tests/
-    └── test_modules.py           # Unit tests (RSI, Risk Management, AI Feature Extraction)
+│   ├── config.py                 # Pembaca & validator .env terstruktur
+│   ├── exchange.py               # Client CCXT Binance
+│   ├── fetcher.py                # Pembaca Ticker & Candlestick OHLCV (limit 210 candle)
+│   ├── features.py               # Ekstraksi 18 indikator teknikal untuk Machine Learning
+│   ├── strategy.py               # Logika RSI Momentum Dinamis + MA200 Trend Filter
+│   ├── ai_strategy.py            # Strategi Hybrid (Momentum RSI + MA200 + AI Probability Filter)
+│   ├── risk.py                   # Aturan 10% Saldo USDT, Target TP & SL
+│   └── bot.py                    # Koordinator alur trading, multi-market scanner & monitoring
 ```
 
 ---
 
-## 🧠 Modul AI Machine Learning
+## 🧠 Cara Kerja Model AI & Jadwal Retraining
 
-### 1. Rekayasa Fitur (Feature Engineering)
-Modul [src/features.py](file:///home/harry/.gemini/antigravity-ide/scratch/binance_trading_bot/src/features.py) mengekstrak 18 fitur teknikal prediktif dari data pasar:
-- **Momentum Pengembalian**: `ret_1`, `ret_3`, `ret_5`
-- **Osilator**: RSI-14, RSI-7, RSI Momentum Diff
-- **Moving Average Spreads**: Rasio EMA (9/21, 21/50), Close vs EMA-21
-- **MACD**: Normalized MACD Line & Histogram
-- **Bollinger Bands**: `%B` (posisi pita) & `Bandwidth` (volatilitas)
-- **Volatilitas**: Normalized ATR-14 (Average True Range)
-- **Volume & Geometri Lilin**: Rasio Volume terhadap SMA-20, Volume Change, Rasio Body/Wick
+### Mode Bekerja vs Belajar
+- **Saat Bot Berjalan (Live Trading):** Bot secara **otomatis & real-time** menarik data *candle* terbaru dari Binance setiap 5 detik (sesuai `POLL_INTERVAL_SECONDS`). Model AI akan memproses grafik detik itu juga untuk membuat prediksi. AI *selalu up-to-date* terhadap kondisi market saat itu.
+- **Saat Pelatihan (Retraining):** "Ingatan" pola pasar AI didapat dari file data historis (`data/historical_candles_15m.csv`). Data riwayat ini statis. Agar AI tetap peka terhadap tren kripto terkini, **sangat disarankan untuk melatih ulang model secara manual (menjalankan `download_historical_data.py` dilanjutkan `train_ai_model.py`) setidaknya 1 atau 2 minggu sekali.**
 
-### 2. Strategi Hybrid AI Filter ([src/ai_strategy.py](file:///home/harry/.gemini/antigravity-ide/scratch/binance_trading_bot/src/ai_strategy.py))
-- **Alur Keputusan**:
-  1. Lilin 15 menit diperiksa apakah terjadi kondisi Oversold (`RSI < 30`).
-  2. Jika RSI < 30, **Model AI memprediksi probabilitas kenaikan harga** dalam 3 lilin (45 menit) ke depan tanpa menyentuh stop loss.
-  3. **Hanya mengeksekusi BELI** jika probabilitas AI melampaui ambang keyakinan (`AI_CONFIDENCE_THRESHOLD`, misal 35%–40%).
-  4. Jika RSI < 30 tetapi AI mendeteksi momentum melemah atau risiko penurunan tinggi, sinyal beli **otomatis dibatalkan** untuk melindungi modal dari *false breakout*.
+---
+
+## 🛡️ Aturan Manajemen Risiko & Modal (Mainnet)
+
+1. **Batas Alokasi Modal Maksimal (10% Saldo USDT)**:
+   - Pembelian dibatasi sesuai konfigurasi `MAX_BALANCE_RISK_PERCENT` di file `.env`. 
+   - Nilai *default* adalah `10.0` (Artinya bot hanya memakai 10% dari uang tunai/USDT untuk sekali beli).
+2. **Kebutuhan Minimum Saldo untuk Mainnet**:
+   - Limit transaksi terendah di Binance Spot (Notional Limit) umumnya berkisar **$5 - $10 USD**.
+   - Jika Anda membatasi bot hanya 10% per transaksi, maka **saldo total minimal yang dianjurkan untuk Mainnet adalah $100 USDT**. (Sehingga 10% dari $100 = $10, aman melewati limit bursa).
+   - *Catatan: Jika Anda hanya ingin modal $20 USDT, Anda harus menaikkan limit risiko di `.env` menjadi misal 50% atau 100%.*
 
 ---
 
 ## 🚀 Panduan Penggunaan Lengkap
 
-### 1. Masuk ke Direktori Proyek
-```bash
-cd /home/harry/.gemini/antigravity-ide/scratch/binance_trading_bot
-```
-
-### 2. Aktifkan Virtual Environment & Pasang Dependensi
+### 1. Persiapan Awal
+Pasang dependensi Python yang dibutuhkan:
 ```bash
 source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 3. Mengunduh Data Historis untuk AI
-Unduh 5.000 data lilin historis 15 menit (~52 hari) dari Binance:
+### 2. Mengatur Watchlist Koin & Setelan Utama
+Buka file `.env` dan tambahkan koin-koin favorit Anda:
+```env
+WATCHLIST=BNB/USDT,SOL/USDT,XRP/USDT,ADA/USDT,DOGE/USDT,ETH/USDT,BTC/USDT
+STRATEGY_TYPE=HYBRID   # Pilihan: RSI atau HYBRID atau AI_ONLY
+IS_TESTNET=True        # Ubah ke False jika sudah siap pakai uang sungguhan (Mainnet)
+DRY_RUN=False
+```
+
+### 3. Melatih Model AI (Wajib Lakukan Secara Berkala)
+Unduh data pasar terbaru lalu latih model AI-nya:
 ```bash
 ./venv/bin/python download_historical_data.py --candles 5000
-```
-
-### 4. Melatih (Train) Model AI
-Latih model AI prediktif berbasis *Gradient Boosting*:
-```bash
 ./venv/bin/python train_ai_model.py
 ```
-> Model akan dievaluasi dengan *out-of-sample test set* dan disimpan otomatis ke `models/ai_trading_model.joblib`.
 
-### 5. Menjalankan Uji Diagnostik Sistem (8 Komponen)
-```bash
-./venv/bin/python test_connection.py
-```
-
-### 6. Menjalankan Bot Trading
+### 4. Menjalankan Bot Trading
+Nyalakan mesin utama pencetak cuan:
 ```bash
 ./venv/bin/python main.py
 ```
-- Menekan `Ctrl + C` akan menghentikan bot secara aman (*graceful shutdown*).
-- Secara default, bot berjalan dalam mode **`DRY_RUN=True`** (simulasi aman tanpa memotong saldo).
-- Untuk mengirim order nyata ke bursa Binance Testnet, ubah baris di [.env](file:///home/harry/.gemini/antigravity-ide/scratch/binance_trading_bot/.env): `DRY_RUN=False`.
-
-### 7. Menjalankan Unit Tests
-```bash
-./venv/bin/python -m unittest discover -s tests
-```
-
----
-
-## 🛡️ Aturan Manajemen Risiko
-1. **Batas Alokasi Modal 10% Saldo**:
-   - Pembelian dibatasi maksimal 10% dari saldo bebas USDT yang tersedia (`free_usdt * 0.10`).
-   - Dilengkapi validasi *minimum notional* dan *minimum lot size* Binance.
-2. **Stop Loss Statis 2%**:
-   - Dipasang pada harga: $\text{Stop Loss} = \text{Entry Price} \times 0.98$.
-   - Jika harga pasar menyentuh atau turun menembus level SL, bot seketika mengeksekusi order jual darurat (*cut loss*).
+> Tekan `Ctrl + C` kapan saja untuk menghentikan bot secara aman (*graceful shutdown*).
